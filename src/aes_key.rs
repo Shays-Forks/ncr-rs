@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
-use rand::Rng;
+use rand::random;
 
 use crate::NcrError;
 
@@ -23,7 +23,7 @@ impl AesKey {
 
     /// Generate a random key.
     pub fn gen_random_key() -> Self {
-        Self(rand::thread_rng().gen())
+        Self(random())
     }
 
     /// Generate a key from a passphrase.
@@ -44,7 +44,7 @@ impl AesKey {
     ///
     /// # Error
     ///
-    /// This return a error if the text isn't a base64 string or it's length isn't 128 bits.
+    /// This return an error if the text isn't a base64 string, or it's length isn't 128 bits.
     pub fn decode_base64(value: &String) -> Result<Self, NcrError> {
         let result = STANDARD.decode(value).map_err(|_| NcrError::DecodeError)?;
 

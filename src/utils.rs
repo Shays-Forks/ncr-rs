@@ -12,7 +12,7 @@ pub fn prepend_header(text: &str) -> String {
 ///
 /// # Error
 ///
-/// This return a error if "#%" is not presented before the text.
+/// This return an error if "#%" is not presented before the text.
 #[inline]
 pub fn trim_header(text: &str) -> Result<&str, NcrError> {
     if text.starts_with("#%") {
