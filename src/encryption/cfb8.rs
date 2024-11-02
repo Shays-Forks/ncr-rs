@@ -1,21 +1,20 @@
+use super::Encryption;
+use crate::{encoding::Encoding, AesKey, NcrError};
 use aes::{
     cipher::{AsyncStreamCipher, KeyIvInit},
     Aes128,
 };
 use cfb8::{Decryptor, Encryptor};
-use rand::Rng;
-use std::{convert::Infallible, marker::PhantomData, num::Wrapping};
-
-use super::Encryption;
-use crate::{encoding::Encoding, AesKey, NcrError};
+use rand::random;
+use std::num::Wrapping;
 
 /// The aes/cfb8 encryption.
-#[derive(Debug)]
-pub struct Cfb8Encryption<E: Encoding>(PhantomData<E>);
+#[derive(Clone, Copy, Debug)]
+pub struct Cfb8Encryption<E: Encoding>(pub E);
 
 // Aes/Cfb8 encryption:
 // This diagram shows the raw bytes used before encoding (and after decoding).
-// 
+//
 // |    8    -     Var      | (bytes)
 // |  Nonce  |  Ciphertext  |
 // |------------------------|
@@ -23,36 +22,6 @@ pub struct Cfb8Encryption<E: Encoding>(PhantomData<E>);
 // Where:
 //     Nonce is fed into java.util.Random as seed to generate IV, which is used for encryption.
 //     Ciphertext is the plaintext after encryption (same length as plaintext).
-
-impl<E: Encoding> Cfb8Encryption<E> {
-    fn raw_encrypt(plaintext: &[u8], key: &AesKey) -> Vec<u8> {
-        let mut output = Vec::with_capacity(8 + plaintext.len());
-        let nonce = rand::thread_rng().gen::<[u8; 8]>();
-
-        output.extend_from_slice(&nonce);
-        output.extend_from_slice(plaintext);
-
-        let iv = generate_iv(u64::from_be_bytes(nonce));
-
-        Encryptor::<Aes128>::new(key.as_ref().into(), &iv.into()).encrypt(&mut output[8..]);
-
-        output
-    }
-
-    fn raw_decrypt(ciphertext: Vec<u8>, key: &AesKey) -> Result<String, NcrError> {
-        if ciphertext.len() < 8 {
-            return Err(NcrError::DecryptError);
-        }
-        let nonce: [u8; 8] = ciphertext[..8].try_into().unwrap();
-
-        let iv = generate_iv(u64::from_be_bytes(nonce));
-
-        let mut output = Vec::from(&ciphertext[8..]);
-        Decryptor::<Aes128>::new(key.as_ref().into(), &iv.into()).decrypt(&mut output);
-
-        String::from_utf8(output).map_err(|_| NcrError::DecryptError)
-    }
-}
 
 fn generate_iv(nonce: u64) -> [u8; 16] {
     /// Modulus
@@ -77,18 +46,34 @@ fn generate_iv(nonce: u64) -> [u8; 16] {
 
 impl<E: Encoding> Encryption for Cfb8Encryption<E> {
     type KeyType = AesKey;
-    type EncryptError = Infallible;
-    type DecryptError = NcrError;
 
-    fn encrypt(plaintext: &str, key: &AesKey) -> Result<String, Infallible> {
-        let ciphertext = Self::raw_encrypt(plaintext.as_bytes(), key);
+    fn encrypt(self, plaintext: &str, key: &AesKey) -> Result<String, NcrError> {
+        let mut ciphertext = Vec::with_capacity(8 + plaintext.len());
+        let nonce = random::<[u8; 8]>();
 
-        Ok(E::encode(&ciphertext))
+        ciphertext.extend_from_slice(&nonce);
+        ciphertext.extend_from_slice(plaintext.as_ref());
+
+        let iv = generate_iv(u64::from_be_bytes(nonce));
+
+        Encryptor::<Aes128>::new(key.as_ref().into(), &iv.into()).encrypt(&mut ciphertext[8..]);
+
+        Ok(self.0.encode(&ciphertext))
     }
 
-    fn decrypt(ciphertext: &str, key: &AesKey) -> Result<String, NcrError> {
-        let ciphertext = E::decode(ciphertext)?;
+    fn decrypt(self, ciphertext: &str, key: &AesKey) -> Result<String, NcrError> {
+        let ciphertext = self.0.decode(ciphertext)?;
 
-        Self::raw_decrypt(ciphertext, key)
+        if ciphertext.len() < 8 {
+            return Err(NcrError::DecryptError);
+        }
+        let nonce: [u8; 8] = ciphertext[..8].try_into().unwrap();
+
+        let iv = generate_iv(u64::from_be_bytes(nonce));
+
+        let mut output = Vec::from(&ciphertext[8..]);
+        Decryptor::<Aes128>::new(key.as_ref().into(), &iv.into()).decrypt(&mut output);
+
+        String::from_utf8(output).map_err(|_| NcrError::DecryptError)
     }
 }

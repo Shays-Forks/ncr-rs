@@ -4,11 +4,11 @@ use crate::NcrError;
 /// The mc256 encoding, made by Sharp5s.
 ///
 /// See [No Chat Reports](https://github.com/HKS-HNS/No-Chat-Reports/commit/45327294178fd131732892647fa0e9949aca5cb1).
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Mc256Encoding;
 
 impl Encoding for Mc256Encoding {
-    fn encode(text: &[u8]) -> String {
+    fn encode(self, text: &[u8]) -> String {
         let mut output = String::new();
 
         for ch in text {
@@ -18,7 +18,7 @@ impl Encoding for Mc256Encoding {
         output
     }
 
-    fn decode(text: &str) -> Result<Vec<u8>, NcrError> {
+    fn decode(self, text: &str) -> Result<Vec<u8>, NcrError> {
         let mut output = Vec::new();
 
         for ch in text.chars() {

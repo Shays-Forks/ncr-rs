@@ -3,19 +3,18 @@ use aes::{
     Aes128,
 };
 use aes_gcm::{AeadInPlace, AesGcm};
-use rand::Rng;
-use std::{convert::Infallible, marker::PhantomData};
+use rand::random;
 
 use super::Encryption;
 use crate::{encoding::Encoding, AesKey, NcrError};
 
 /// The aes/gcm encryption.
-#[derive(Debug)]
-pub struct GcmEncryption<E: Encoding>(PhantomData<E>);
+#[derive(Clone, Copy, Debug)]
+pub struct GcmEncryption<E: Encoding>(pub E);
 
 // Aes/Gcm encryption:
 // This diagram shows the raw bytes used before encoding (and after decoding).
-// 
+//
 // |  12  -     Var      -  12   | (bytes)
 // |  IV  |  Ciphertext  |  Tag  |
 // |-----------------------------|
@@ -25,26 +24,30 @@ pub struct GcmEncryption<E: Encoding>(PhantomData<E>);
 //     Ciphertext is the plaintext after encryption (same length as plaintext).
 //     Tag is the GCM Authorization Tag (decryption would fail if tag doesn't match).
 
-impl<E: Encoding> GcmEncryption<E> {
-    fn raw_encrypt(plaintext: &[u8], key: &AesKey) -> Vec<u8> {
-        let mut output = Vec::with_capacity(plaintext.len() + 24);
-        let iv = rand::thread_rng().gen::<[u8; 12]>();
+impl<E: Encoding> Encryption for GcmEncryption<E> {
+    type KeyType = AesKey;
 
-        output.extend_from_slice(&iv);
-        output.extend_from_slice(plaintext);
+    fn encrypt(self, plaintext: &str, key: &AesKey) -> Result<String, NcrError> {
+        let mut ciphertext = Vec::with_capacity(plaintext.len() + 24);
+        let iv = random::<[u8; 12]>();
+
+        ciphertext.extend_from_slice(&iv);
+        ciphertext.extend_from_slice(plaintext.as_ref());
 
         let cipher = AesGcm::<Aes128, U12, U12>::new(key.as_ref().into());
 
         let tag = cipher
-            .encrypt_in_place_detached(&iv.into(), &[], &mut output[12..])
-            .unwrap();
+            .encrypt_in_place_detached(&iv.into(), &[], &mut ciphertext[12..])
+            .map_err(|_| NcrError::EncryptError)?;
 
-        output.extend_from_slice(&tag);
+        ciphertext.extend_from_slice(&tag);
 
-        output
+        Ok(self.0.encode(&ciphertext))
     }
 
-    fn raw_decrypt(ciphertext: Vec<u8>, key: &AesKey) -> Result<String, NcrError> {
+    fn decrypt(self, ciphertext: &str, key: &AesKey) -> Result<String, NcrError> {
+        let ciphertext = self.0.decode(ciphertext)?;
+
         if ciphertext.len() < 24 {
             return Err(NcrError::DecryptError);
         }
@@ -61,23 +64,5 @@ impl<E: Encoding> GcmEncryption<E> {
             .map_err(|_| NcrError::DecryptError)?;
 
         String::from_utf8(output).map_err(|_| NcrError::DecryptError)
-    }
-}
-
-impl<E: Encoding> Encryption for GcmEncryption<E> {
-    type KeyType = AesKey;
-    type EncryptError = Infallible;
-    type DecryptError = NcrError;
-
-    fn encrypt(plaintext: &str, key: &AesKey) -> Result<String, Infallible> {
-        let ciphertext = Self::raw_encrypt(plaintext.as_bytes(), key);
-
-        Ok(E::encode(&ciphertext))
-    }
-
-    fn decrypt(ciphertext: &str, key: &AesKey) -> Result<String, NcrError> {
-        let ciphertext = E::decode(ciphertext)?;
-
-        Self::raw_decrypt(ciphertext, key)
     }
 }

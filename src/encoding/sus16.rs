@@ -4,11 +4,11 @@ use crate::NcrError;
 /// The sus16 encoding, made by [EnderKill98](https://github.com/EnderKill98).
 ///
 /// See [No Chat Reports](https://github.com/HKS-HNS/No-Chat-Reports).
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Sus16Encoding;
 
 impl Encoding for Sus16Encoding {
-    fn encode(text: &[u8]) -> String {
+    fn encode(self, text: &[u8]) -> String {
         let mut output = String::new();
 
         for ch in text {
@@ -19,12 +19,14 @@ impl Encoding for Sus16Encoding {
         output
     }
 
-    fn decode(text: &str) -> Result<Vec<u8>, NcrError> {
+    fn decode(self, text: &str) -> Result<Vec<u8>, NcrError> {
         let mut output: Vec<u8> = Vec::new();
 
         let mut chars = text.chars();
         loop {
-            let Some(c1) = chars.next() else { break; };
+            let Some(c1) = chars.next() else {
+                break;
+            };
             let c2 = chars.next().ok_or(NcrError::DecodeError)?;
 
             let r1 = sus16_decode(c1)?;

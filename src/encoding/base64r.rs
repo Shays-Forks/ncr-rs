@@ -7,11 +7,11 @@ use crate::NcrError;
 ///
 /// In Minecraft 1.19.3, the character `¸` is changed to `×`.
 /// If you are using 1.19.3 or above, please use [NewBase64rEncoding] instead.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Base64rEncoding;
 
 impl Encoding for Base64rEncoding {
-    fn encode(text: &[u8]) -> String {
+    fn encode(self, text: &[u8]) -> String {
         let encoded = STANDARD.encode(text);
         let mut output = String::new();
 
@@ -22,7 +22,7 @@ impl Encoding for Base64rEncoding {
         output
     }
 
-    fn decode(text: &str) -> Result<Vec<u8>, NcrError> {
+    fn decode(self, text: &str) -> Result<Vec<u8>, NcrError> {
         let mut output = String::new();
 
         for ch in text.chars() {
@@ -37,11 +37,11 @@ impl Encoding for Base64rEncoding {
 ///
 /// In Minecraft 1.19.3, the character `¸` is changed to `×`.
 /// If you are using 1.19.2, please use [Base64rEncoding] instead.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct NewBase64rEncoding;
 
 impl Encoding for NewBase64rEncoding {
-    fn encode(text: &[u8]) -> String {
+    fn encode(self, text: &[u8]) -> String {
         let encoded = STANDARD.encode(text);
         let mut output = String::new();
 
@@ -58,7 +58,7 @@ impl Encoding for NewBase64rEncoding {
         output
     }
 
-    fn decode(text: &str) -> Result<Vec<u8>, NcrError> {
+    fn decode(self, text: &str) -> Result<Vec<u8>, NcrError> {
         let mut output = String::new();
 
         for ch in text.chars() {

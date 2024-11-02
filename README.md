@@ -22,12 +22,14 @@ use ncr::{
     AesKey,
 };
 
-let key = AesKey::gen_from_passphrase(b"secret");
+fn main() {
+    let key = AesKey::gen_from_passphrase(b"secret");
 
-let plaintext = prepend_header("I love Minecraft!");
-let ciphertext = Cfb8Encryption::<Base64rEncoding>::encrypt(&plaintext, &key).unwrap();
+    let plaintext = prepend_header("I love Minecraft!");
+    let ciphertext = Cfb8Encryption(Base64rEncoding).encrypt(&plaintext, &key).unwrap();
 
-println!("{}", ciphertext);
+    println!("{}", ciphertext);
+}
 ```
 
 ## Decrypting
@@ -40,12 +42,14 @@ use ncr::{
     AesKey,
 };
 
-let key = AesKey::gen_from_passphrase(b"secret");
+fn main() {
+    let key = AesKey::gen_from_passphrase(b"secret");
 
-let ciphertext = r#"%[2_0»³"!7).«?;!.$¥`¶:8~667ª¸[¬)¢+¤^"#;
-let plaintext = Cfb8Encryption::<Base64rEncoding>::decrypt(ciphertext, &key).unwrap();
+    let ciphertext = r#"%[2_0»³"!7).«?;!.$¥`¶:8~667ª¸[¬)¢+¤^"#;
+    let plaintext = Cfb8Encryption(Base64rEncoding).decrypt(ciphertext, &key).unwrap();
 
-let plaintext = trim_header(&plaintext).unwrap();
+    let plaintext = trim_header(&plaintext).unwrap();
 
-assert_eq!(plaintext, "I love Minecraft!");
+    assert_eq!(plaintext, "I love Minecraft!");
+}
 ```

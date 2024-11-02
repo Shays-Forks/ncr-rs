@@ -8,7 +8,7 @@
 //! use ncr::encryption::{CaesarEncryption, Encryption};
 //!
 //! let decrypted = "#%Hello, world!";
-//! let encrypted = CaesarEncryption::encrypt(decrypted, &5).unwrap();
+//! let encrypted = CaesarEncryption.encrypt(decrypted, &5).unwrap();
 //!
 //! assert_eq!(encrypted, "(*Mjqqt1%|twqi&");
 //! ```
@@ -19,7 +19,7 @@
 //! use ncr::encryption::{CaesarEncryption, Encryption};
 //!
 //! let encrypted = "(*Mjqqt1%|twqi&";
-//! let decrypted = CaesarEncryption::decrypt(encrypted, &5).unwrap();
+//! let decrypted = CaesarEncryption.decrypt(encrypted, &5).unwrap();
 //!
 //! assert_eq!(decrypted, "#%Hello, world!");
 //! ```
@@ -33,23 +33,22 @@ mod ecb;
 #[cfg(feature = "gcm")]
 mod gcm;
 
-pub use self::caesar::CaesarEncryption;
+use crate::NcrError;
+pub use caesar::CaesarEncryption;
 #[cfg(feature = "cfb8")]
-pub use self::cfb8::Cfb8Encryption;
+pub use cfb8::Cfb8Encryption;
 #[cfg(feature = "ecb")]
-pub use self::ecb::EcbEncryption;
+pub use ecb::EcbEncryption;
 #[cfg(feature = "gcm")]
-pub use self::gcm::GcmEncryption;
+pub use gcm::GcmEncryption;
 
 /// The encryption trait.
 pub trait Encryption {
     type KeyType;
-    type EncryptError;
-    type DecryptError;
 
     /// Encrypt a given text.
-    fn encrypt(plaintext: &str, key: &Self::KeyType) -> Result<String, Self::EncryptError>;
+    fn encrypt(self, plaintext: &str, key: &Self::KeyType) -> Result<String, NcrError>;
 
     /// Decrypt a given text.
-    fn decrypt(ciphertext: &str, key: &Self::KeyType) -> Result<String, Self::DecryptError>;
+    fn decrypt(self, ciphertext: &str, key: &Self::KeyType) -> Result<String, NcrError>;
 }

@@ -25,7 +25,7 @@
 //! let key = AesKey::gen_from_passphrase(b"secret");
 //!
 //! let plaintext = prepend_header("I love Minecraft!");
-//! let ciphertext = Cfb8Encryption::<Base64rEncoding>::encrypt(&plaintext, &key).unwrap();
+//! let ciphertext = Cfb8Encryption(Base64rEncoding).encrypt(&plaintext, &key).unwrap();
 //!
 //! println!("{}", ciphertext);
 //! ```
@@ -43,7 +43,7 @@
 //! let key = AesKey::gen_from_passphrase(b"secret");
 //!
 //! let ciphertext = r#"%[2_0»³"!7).«?;!.$¥`¶:8~667ª¸[¬)¢+¤^"#;
-//! let plaintext = Cfb8Encryption::<Base64rEncoding>::decrypt(ciphertext, &key).unwrap();
+//! let plaintext = Cfb8Encryption(Base64rEncoding).decrypt(ciphertext, &key).unwrap();
 //!
 //! let plaintext = trim_header(&plaintext).unwrap();
 //!
@@ -63,7 +63,7 @@
 //! 1. Two characters `#%` will be prepended to every message.
 //! 2. The string is fed into one of the encryption algorithms.
 //! 3. The encrypted bytes are fed into one of the encoding algorithms to turn them into sendable Minecraft messages.
-//! 
+//!
 //! The reversal is done on decryption.
 
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]

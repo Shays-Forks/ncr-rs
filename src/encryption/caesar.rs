@@ -4,7 +4,7 @@ use crate::NcrError;
 /// The caesar encryption.
 ///
 /// This is a meme cipher. For security reasons, you shouldn't use this encryption.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct CaesarEncryption;
 
 const PARAGRAPH: char = '\u{00a7}';
@@ -14,10 +14,8 @@ const DELETE_PLACEHOLDER: char = '\u{fff0}';
 
 impl Encryption for CaesarEncryption {
     type KeyType = u32;
-    type EncryptError = NcrError;
-    type DecryptError = NcrError;
 
-    fn encrypt(plaintext: &str, key: &u32) -> Result<String, NcrError> {
+    fn encrypt(self, plaintext: &str, key: &u32) -> Result<String, NcrError> {
         let mut output = String::with_capacity(plaintext.len());
 
         for ch in plaintext.chars() {
@@ -35,7 +33,7 @@ impl Encryption for CaesarEncryption {
         Ok(output)
     }
 
-    fn decrypt(ciphertext: &str, key: &u32) -> Result<String, NcrError> {
+    fn decrypt(self, ciphertext: &str, key: &u32) -> Result<String, NcrError> {
         let mut output = String::with_capacity(ciphertext.len());
 
         for mut ch in ciphertext.chars() {
