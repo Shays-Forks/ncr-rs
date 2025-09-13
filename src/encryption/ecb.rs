@@ -1,10 +1,10 @@
-use aes::{
-    cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyInit},
-    Aes128Dec, Aes128Enc,
-};
-
 use super::Encryption;
 use crate::{encoding::Encoding, AesKey, NcrError};
+use aes::{
+    cipher::{block_padding::Pkcs7, KeyInit},
+    Aes128Dec, Aes128Enc,
+};
+use cipher::{BlockCipherDecrypt, BlockCipherEncrypt};
 
 /// The aes/ecb encryption.
 #[derive(Clone, Copy, Debug)]
@@ -27,7 +27,7 @@ impl<E: Encoding> Encryption for EcbEncryption<E> {
         let cipher = Aes128Enc::new(key.as_ref().into());
 
         // Pkcs5 is a subset of Pkcs7.
-        let ciphertext = cipher.encrypt_padded_vec_mut::<Pkcs7>(plaintext.as_ref());
+        let ciphertext = cipher.encrypt_padded_vec::<Pkcs7>(plaintext.as_ref());
 
         Ok(self.0.encode(&ciphertext))
     }
@@ -39,7 +39,7 @@ impl<E: Encoding> Encryption for EcbEncryption<E> {
 
         // Pkcs5 is a subset of Pkcs7.
         let output = cipher
-            .decrypt_padded_vec_mut::<Pkcs7>(&ciphertext)
+            .decrypt_padded_vec::<Pkcs7>(&ciphertext)
             .map_err(|_| NcrError::DecryptError)?;
 
         String::from_utf8(output).map_err(|_| NcrError::DecryptError)

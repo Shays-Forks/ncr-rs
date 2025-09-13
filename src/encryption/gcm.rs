@@ -2,7 +2,7 @@ use aes::{
     cipher::{typenum::U12, KeyInit},
     Aes128,
 };
-use aes_gcm::{AeadInPlace, AesGcm};
+use aes_gcm::{aead::AeadInPlace, AesGcm};
 use rand::random;
 
 use super::Encryption;
